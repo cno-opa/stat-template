@@ -3,7 +3,11 @@
 #
 #
 
-
+require(lubridate)
+require(zoo)
+require(dplyr)
+require(ggplot)
+require(reshape2)
 
 library("grid")
 library("gridExtra")

@@ -76,5 +76,14 @@ dateFromYearMon <- function(ym, eom = TRUE) {
                     sep = "-"
                   ))
     return(dateObj)
+  } else if(eom == FALSE) {
+    ym <- as.Date(as.yearmon(ym))
+    dateObj <- ymd(paste(
+                    year(ym),
+                    month(ym),
+                    "01",
+                    sep = "-"
+                  ))
+    return(dateObj)
   }
 }

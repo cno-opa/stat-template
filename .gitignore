@@ -1,0 +1,7 @@
+.Rdata
+.Rhistory
+*.Rproj
+.Rproj.user/*
+data/*
+notes/*
+ignore/*
