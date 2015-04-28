@@ -28,11 +28,11 @@ cleanSource <- function(data) {
 }
 
 # calculate summary tables
-makeSummary <- function(data, filter_input) {
+makeSummary <- function(data, service_request) {
 
   countOpen <- function(data, month) {
     u <- dateFromYearMon(month)
-    x <- filter(data, open_dt <= u & closed_dt > u | is.na(closed_dt))
+    x <- filter(data, open_dt <= u, closed_dt > u | is.na(closed_dt))
     return(nrow(x))
   }
 
@@ -42,23 +42,51 @@ makeSummary <- function(data, filter_input) {
     return( o - c )
   }
 
-  d <- filter(data, type == filter_input)
+  d <- filter(data, type == service_request)
   month_range <- unique(d$month_start)
 
-  output <- data.frame(type = filter_input, date = month_range)
+  output <- data.frame(type = service_request, date = month_range)
   output$open <- sapply(output$date, countOpen, data = d)
   output$net <- sapply(output$date, countNet, data = d)
-  output <- melt(output, id.vars = c("type", "date"))
+  output$shade <- ifelse(output$net > 0, "bad","good")
+  output <- melt(output, id.vars = c("type", "date", "shade"))
 
   return(output)
 }
 
 #plot
+plot311NetLog <- function(data, service_request) {
+
+  d <- filter(data, type == service_request)
+
+  #filter for last two years by yearmon factor
+  range_u <- length(levels(d$date))
+  range_l <- range_u - 24
+  date_range <- levels(d$date)[range_l:range_u]
+
+  d <- filter(d, date %in% date_range)
+
+  p_line <- lineOPA(filter(d, variable == "open"), "date", "value", title = paste(service_request, "service requests open at end of month"), labels = "format(value, big.mark = \",\", scientific = FALSE)")
+  p_bar <- barOPA(filter(d, variable == "net"), "date", "value", title = paste(service_request, "service requests net per month"), fill = "shade", labels = "format(value, big.mark = \",\", scientific = FALSE)") +
+           scale_y_continuous(breaks = 0) +
+           good_bad_scale +
+           theme(axis.text.y = element_blank(), legend.position = "none")
+
+# scale_fill_manual(values = c(darkBlue, red), guide = FALSE) +
+
+  p_line <- buildChart(p_line)
+  p_bar <- buildChart(p_bar)
+
+  #remove any backslashes that will break save call
+  service_request <- gsub("/", " ", service_request, fixed = TRUE)
+
+  ggsave( file = paste("./output/311", service_request, "backlog.png"), plot = p_line, width = 7.42, height = 5.75)
+  ggsave( file = paste("./output/311", service_request, "net.png"), plot = p_bar, width = 7.42, height = 5.75)
+}
 
 #load and run
 data <- read.csv("./data/311-source.csv", header = TRUE)
 data <- cleanSource(data)
-data <- getTwoYears(data, open_dt, r_period)
 
 summary_table <- rbind(
                  makeSummary(data, "Pothole/Roadway Surface Repair"),
@@ -74,3 +102,9 @@ summary_table <- rbind(
                  makeSummary(data, "Mosquito Control"),
                  makeSummary(data, "Rodent Complaint")
                  )
+
+theme_set(theme_opa())
+
+service_requests <- as.character(unique(summary_table$type))
+
+sapply(service_requests, plot311NetLog, data = summary_table)

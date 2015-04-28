@@ -2,6 +2,8 @@
 .Rhistory
 *.Rproj
 .Rproj.user/*
+*.pdf
 data/*
+output/*
 notes/*
 ignore/*

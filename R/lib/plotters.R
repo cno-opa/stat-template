@@ -22,6 +22,7 @@
 library("grid")
 library("gridExtra")
 library("gtable")
+require(ggplot2)
 
 theme_opa <- function (base_size = 14, base_family = "")
 {
@@ -81,6 +82,11 @@ theme_opa <- function (base_size = 14, base_family = "")
 lightBlue <- "#72d0ff"
 darkBlue <- "#005983"
 red <- "tomato"
+
+#good/bad fills scale for using barOPA to show net change (and other pos-neg comparisons)
+good_bad <- c(darkBlue, red)
+names(good_bad) <- c("good", "bad")
+good_bad_scale <- scale_fill_manual(name = "shade", values = good_bad)
 
 #chart builder!
 buildChart <- function(p) {
@@ -249,7 +255,7 @@ barOPA <- function(data, x, y, title = "Title", stat = "identity", position = "i
 
   if( !is.null(dots$labels) ) {
     base <- base +
-            geom_text(size = 4, colour = "grey33",  vjust = ifelse(data[y] >= 0, -0.5, 1.5), aes_string(label = dots$labels, y = y))
+            geom_text(size = 2, colour = "grey33",  vjust = ifelse(data[y] >= 0, -0.5, 1.5), aes_string(label = dots$labels, y = y))
   }
 
   if( !is.null(dots$fill) ) {

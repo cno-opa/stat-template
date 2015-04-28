@@ -6,7 +6,8 @@
 require(lubridate)
 require(zoo)
 require(dplyr)
-require(ggplot)
+require(ggplot2)
+require(scales)
 require(reshape2)
 
 library("grid")
