@@ -130,6 +130,8 @@ lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, cu
   # set legend labels with `legend.labels = character vector`
   # percent = FALSE refers to whether or not y-axis should be in percent
   # currency = FALSE refers to whether or not y-axis should be in currency
+  # lab.size = 4, set custom label size
+  # use `target.line = x` to draw dashed horizontal line at y-intercept of x
 
   dots <- eval(substitute(alist(...)))
 
@@ -182,7 +184,7 @@ lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, cu
     #hacky way to get labels data when there is more than one series. pulls all data in df for the named period
     getLabelsData <- function() {
       if(group != 1) {
-        d <- data[data[,1] == r_period,]
+        d <- data[data[x] == r_period,]
         return(d)
       } else {
         return(data[nrow(data), ])
@@ -193,18 +195,26 @@ lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, cu
 
     base <- base +
             geom_text(data = labels_data, size = lab.size, colour = "grey33", hjust = -0.2, aes_string(label = dots$labels, y = y)) +
-            scale_x_discrete(expand = c(0, 2.4)) #extend the width of the plot area so label doesn't get cut off
+            scale_x_discrete(expand = c(0, 2.5)) #extend the width of the plot area so label doesn't get cut off
   } else if( !is.null(dots$labels) ) {
     base <- base +
             geom_text(size = lab.size, colour = "grey33", vjust = -0.5, aes_string(label = dots$labels, y = y))
   }
 
   if(currency == TRUE){
-    base <- base + scale_y_continuous(breaks = brks, labels = dollar_format(largest_with_cents=0)) + expand_limits(y = c(0, brks[length(brks)]))
+    base <- base +
+            scale_y_continuous(breaks = brks, labels = dollar_format(largest_with_cents=0)) +
+            expand_limits(y = c(0, brks[length(brks)]))
   }
-  
+
   if(percent == FALSE) {
     brks <- pretty_breaks(4, min.n = 4)(0:ymax)
+
+    #handle cases where ymax is float
+    if(brks[length(brks)] <= ymax) {
+      brks <- c(brks, (brks[length(brks)] + abs(brks[2] - brks[1])))
+    }
+
     yul  <- brks[length(brks)]
     base <- base + scale_y_continuous(breaks = brks) + expand_limits(y = c(0, yul))
   } else {
@@ -218,6 +228,29 @@ lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, cu
     }
     brks <- unique(brks)
     base <- base + scale_y_continuous(breaks = brks, labels = percent(brks)) + expand_limits(y = c(0, brks[length(brks)]))
+  }
+
+  if( !is.null(dots$target.line) ) {
+    t <- as.numeric(dots$target.line)
+    base <- base + geom_hline(aes(group = 1), yintercept = t, colour = "grey55", linetype = "dashed", size = 1)
+
+    if(t >= brks[length(brks)] && percent == TRUE) {
+      ymax <- t * 100
+      brks <- (pretty_breaks(4, min.n = 4)(0:ymax))/100
+      for(i in 1:length(brks)) {
+        if(brks[i] > 1) {
+          brks[i] <- 1
+        }
+      }
+      brks <- unique(brks)
+      base <- base + scale_y_continuous(breaks = brks, labels = percent(brks)) + expand_limits(y = c(0, brks[length(brks)]))
+    } else if(t >= brks[length(brks)] && percent == FALSE) {
+      ymax <- t
+      brks <- pretty_breaks(4, min.n = 4)(0:ymax)
+      yul  <- brks[length(brks)]
+
+      base <- base + scale_y_continuous(breaks = brks) + expand_limits(y = c(0, yul))
+    }
   }
 
   return(base)
@@ -245,11 +278,13 @@ barOPA <- function(data, x, y, title = "Title", stat = "identity", position = "i
           labs(title = title, y = "", x = "") +
           scale_y_continuous(breaks = brks) + expand_limits(y = c(0, yul))
 
-		  
+
   if(currency == TRUE) {
-    base <- base + scale_y_continuous(breaks = brks, labels = dollar_format(largest_with_cents=0)) + expand_limits(y = c(0, brks[length(brks)]))
+    base <- base +
+            scale_y_continuous(breaks = brks, labels = dollar_format(largest_with_cents=0)) +
+            expand_limits(y = c(0, brks[length(brks)]))
   }
-  
+
   if(percent == TRUE) {
     ymax <- ymax * 100
     brks <- (pretty_breaks(4, min.n = 4)(0:ymax))/100
@@ -355,13 +390,13 @@ area100pOPA <- function(data, x, y, title = "Title!", group, percent = FALSE, la
 
   #make y variable continuous
   data[y] <- as.numeric(data[y][[1]])
-  
+
   #Define colors
   blues <- colorRampPalette( c(darkBlue, lightBlue) )(nrow(unique(data[group])))
   names(blues) <- as.matrix(unique(data[group]))[,1]
-  
+
   #make the basic plot
-  base <- ggplot(data, aes_string(x = x, y = y)) + 
+  base <- ggplot(data, aes_string(x = x, y = y)) +
     geom_area(aes_string(fill = group, group = group), position='stack') +
     labs(title = title, x = "", y = "")
 
@@ -370,15 +405,15 @@ area100pOPA <- function(data, x, y, title = "Title!", group, percent = FALSE, la
     legend.labels <- eval(dots$legend.labels)
     base <- base + scale_fill_manual( values = blues, labels = legend.labels )
   }
-  
+
   else{
     base <- base + scale_fill_manual( values = blues )
   }
-  
+
   if( !is.null(dots$labels) & last_label == TRUE ) {
   #hacky way to get labels data when there is more than one series. pulls all data in df for the named period
   getLabelsData <- function() {
-      return(data[nrow(data), ]) 
+      return(data[nrow(data), ])
     }
   labels_data <- getLabelsData()
   base <- base +
@@ -390,7 +425,7 @@ area100pOPA <- function(data, x, y, title = "Title!", group, percent = FALSE, la
     base <- base +
             geom_text(size = 4, colour = "grey33", vjust = -0.5, aes_string(label = dots$labels, y = y))
   }
-   
+
   if(percent == TRUE) {
     ymax <- 100
     brks <- (pretty_breaks(4, min.n = 4)(0:ymax))/100
@@ -403,7 +438,6 @@ area100pOPA <- function(data, x, y, title = "Title!", group, percent = FALSE, la
     base <- base + scale_y_continuous(breaks = brks, labels = percent(brks)) + expand_limits(y = c(0, brks[length(brks)]))
   }
 
-  
+
   return(base)
 }
-
