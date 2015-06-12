@@ -122,7 +122,7 @@ buildChart <- function(p) {
   return(built)
 }
 
-lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, currency = FALSE, last_label = TRUE, ...) {
+lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, currency = FALSE, last_label = TRUE, lab.size = 4, ...) {
   # most of the options are passed as dots parameters:
   # set data labels with `labels = "label_column"`
   # set highlight with `highlight = "group_to_highlight"`
@@ -192,11 +192,11 @@ lineOPA <- function(data, x, y, title = "Title!", group = 1, percent = FALSE, cu
     labels_data <- getLabelsData()
 
     base <- base +
-            geom_text(data = labels_data, size = 4, colour = "grey33", hjust = -0.2, aes_string(label = dots$labels, y = y)) +
+            geom_text(data = labels_data, size = lab.size, colour = "grey33", hjust = -0.2, aes_string(label = dots$labels, y = y)) +
             scale_x_discrete(expand = c(0, 2.4)) #extend the width of the plot area so label doesn't get cut off
   } else if( !is.null(dots$labels) ) {
     base <- base +
-            geom_text(size = 4, colour = "grey33", vjust = -0.5, aes_string(label = dots$labels, y = y))
+            geom_text(size = lab.size, colour = "grey33", vjust = -0.5, aes_string(label = dots$labels, y = y))
   }
 
   if(currency == TRUE){
@@ -390,6 +390,19 @@ area100pOPA <- function(data, x, y, title = "Title!", group, percent = FALSE, la
     base <- base +
             geom_text(size = 4, colour = "grey33", vjust = -0.5, aes_string(label = dots$labels, y = y))
   }
+   
+  if(percent == TRUE) {
+    ymax <- 100
+    brks <- (pretty_breaks(4, min.n = 4)(0:ymax))/100
+    for(i in 1:length(brks)) {
+      if(brks[i] > 1) {
+        brks[i] <- 1
+      }
+    }
+    brks <- unique(brks)
+    base <- base + scale_y_continuous(breaks = brks, labels = percent(brks)) + expand_limits(y = c(0, brks[length(brks)]))
+  }
+
   
   return(base)
 }
