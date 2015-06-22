@@ -1,8 +1,8 @@
 # runs the whole kit and kaboodle
 
-.libPaths("C:\\Rpackages")
+.libPaths("YOUR PACKAGE DIRECTORY")
 
-# get user to set reporting period
+# get user to set reporting period. some functions in plotters.R need this variable
 cat("What is the reporting period?\n\n##(Use mmm yyyy format, please)##\n\n")
 r_period <- readLines("stdin", 1, warn = FALSE)
 
