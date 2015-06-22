@@ -1,5 +1,5 @@
 # utils.R
-# generic utility functions used by cleaners.R, plotters.R, and most of the scripts
+# generic utility functions
 #
 #
 

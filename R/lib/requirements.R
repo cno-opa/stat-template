@@ -1,5 +1,5 @@
 # requirements.R
-# Everything you need to make a customer service cake
+# Everything you need to make a cake
 #
 #
 
