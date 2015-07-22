@@ -1,6 +1,6 @@
 # utils.R
 # generic utility functions
-#
+# extend to fit the needs of your script
 #
 
 require(stringr)
